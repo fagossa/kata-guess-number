@@ -22,11 +22,22 @@ object GuessNumberMain extends App {
     if (guess == num) println(s"You guessed right, $name")
     else println(s"You guessed wrong, $name, the number was $num")
 
-    println(s"Do you want to continue, $name?")
+    println(s"Do you want to continue (y/n), $name?")
 
     readLine() match {
       case "y" => exec = true
       case "n" => exec = false
     }
   }
+}
+
+case class IO[A](unsafeRun: () => A) {
+      self =>
+      def map[B](f: A => B): IO[B] = IO(() => f(self.unsafeRun()))
+
+      def flatMap[B](f: A => IO[B]): IO[B] = IO(() => f(self.unsafeRun()).unsafeRun())
+}
+
+object IO {
+      def pure[A](f: => A): IO[A] = IO(() => f)
 }
