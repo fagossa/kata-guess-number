@@ -4,31 +4,50 @@ import scala.util.{Random, Try}
 
 object GuessNumberMain extends App {
   import scala.io.StdIn._
-  println("What is your name")
+  def putString(s: String): IO[Unit] = IO(() => println(s))
 
-  val name = readLine()
+  def readString(): IO[String] = IO(() => readLine())
 
-  println(s"Hello, $name, welcome to the game!")
+  def readInt(): IO[Option[Int]] = IO(() => Try(readLine().toInt).toOption)
 
-  var exec = true
+  def nextInt(max: Int): IO[Int] = IO(() => Random.nextInt(max))
 
-  while (exec) {
-    val num = Random.nextInt(5) + 1
-
-    println(s"Dear $name, please guess a number 1..5")
-
-    val guess = readLine().toInt
-
-    if (guess == num) println(s"You guessed right, $name")
-    else println(s"You guessed wrong, $name, the number was $num")
-
-    println(s"Do you want to continue (y/n), $name?")
-
-    readLine() match {
-      case "y" => exec = true
-      case "n" => exec = false
-    }
+  def continueGame(name: String): IO[Boolean] = {
+    for {
+      _ <- putString(s"Do you want to continue (y/n), $name?")
+      resp <- readString()
+      r <- resp match {
+        case "y" => IO.pure(true)
+        case "n" => IO.pure(false)
+        case _ => continueGame(name)
+      }
+    } yield r
   }
+
+  def gameLoop(name: String): IO[Unit] = {
+    for {
+      num <- nextInt(5).map(_ + 1)
+      _ <- putString(s"Dear $name, please guess a number 1..5")
+      maybeGuess <- readInt()
+      _ <- maybeGuess match {
+        case Some(guess) if guess == num =>
+          putString(s"You guessed right, $name")
+        case _ =>
+          putString(s"You guessed wrong, $name, the number was $num")
+      }
+      nextLoop <- continueGame(name)
+      _ <- if (nextLoop) gameLoop(name) else IO.pure()
+    } yield ()
+  }
+
+  val program = for {
+    _ <- putString("What is your name")
+    name <- readString()
+    _ <- putString(s"Hello, $name, welcome to the game!")
+    _ <- gameLoop(name)
+  } yield ()
+
+  program.unsafeRun()
 }
 
 case class IO[A](unsafeRun: () => A) {
