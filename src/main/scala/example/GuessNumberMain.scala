@@ -1,6 +1,6 @@
 package example
 
-import scala.util.{Random, Try}
+import scala.util.Random
 
 object GuessNumberMain extends App {
   import scala.io.StdIn._
