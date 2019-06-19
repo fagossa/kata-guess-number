@@ -22,7 +22,7 @@ object GuessNumberMain extends App {
     if (guess == num) println(s"You guessed right, $name")
     else println(s"You guessed wrong, $name, the number was $num")
 
-    println(s"Do you want to continue, $name?")
+    println(s"Do you want to continue (y/n), $name?")
 
     readLine() match {
       case "y" => exec = true
